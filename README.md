@@ -1,6 +1,6 @@
-# Maybe Lite
+# Tally
 
-A slimmed-down, single-user rewrite of [Maybe Finance](https://github.com/maybe-finance/maybe) as a plain web app with a minimal light UI:
+Tally is a slimmed-down, single-user rewrite of [Maybe Finance](https://github.com/maybe-finance/maybe) as a plain web app with a minimal light UI:
 
 - **Backend:** Fastify 5 + TypeScript, raw SQL via `pg`, Zod validation
 - **Frontend:** React 19 + Vite + TypeScript, TanStack Query, Tailwind v4, Recharts

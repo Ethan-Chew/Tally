@@ -54,7 +54,7 @@ is unplugged the container refuses to start instead of silently filling the SD c
 ## Updating
 Develop locally, then `git push` to `main`. That's the whole deploy:
 
-1. `.github/workflows/image.yml` builds the arm64 image and publishes it to `ghcr.io/<owner>/maybe-lite` (tags `latest` and the short commit sha).
+1. `.github/workflows/image.yml` builds the arm64 image and publishes it to `ghcr.io/<owner>/tally` (tags `latest` and the short commit sha).
 2. On the Pi, cron runs `~/apps/maybe-lite/update.sh` every 5 minutes. When the `latest` image has changed it takes a database backup
    (tagged `pre-update`, never rotated), recreates the container, and waits for the health check. If the new version doesn't become
    healthy it puts the previous image back and won't retry that same image (it waits for the next push). Output goes to `~/maybe-lite-update.log`.
@@ -65,7 +65,7 @@ cp deploy/update.sh ~/apps/maybe-lite/update.sh && chmod +x ~/apps/maybe-lite/up
 docker login ghcr.io          # username = your GitHub user, password = a token with only the read:packages scope (private image)
 ( crontab -l; echo '*/5 * * * * $HOME/apps/maybe-lite/update.sh >> $HOME/maybe-lite-update.log 2>&1' ) | crontab -
 ```
-Update right now instead of waiting: `~/apps/maybe-lite/update.sh`. Roll back by hand: `docker tag maybe-lite:previous ghcr.io/<owner>/maybe-lite:latest && docker compose up -d`.
+Update right now instead of waiting: `~/apps/maybe-lite/update.sh`. Roll back by hand: `docker tag maybe-lite:previous ghcr.io/<owner>/tally:latest && docker compose up -d`.
 
 I used a small cron script instead of Watchtower: Watchtower is archived upstream and needs the Docker socket (root on the host), and the script
 adds the backup-before-update and the rollback.

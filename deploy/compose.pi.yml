@@ -1,8 +1,8 @@
-# Example: run Maybe Lite against a shared Postgres container (deploy/core-postgres.yml), behind nginx proxy manager.
+# Example: run Tally against a shared Postgres container (deploy/core-postgres.yml), behind nginx proxy manager.
 # Adjust the external network names and the backup folder for your host. See docs/SELF-HOSTING.md.
 services:
   app:
-    image: ghcr.io/OWNER/maybe-lite:latest   # built by .github/workflows/image.yml; deploy/update.sh pulls it
+    image: ghcr.io/ethan-chew/tally:latest   # built by .github/workflows/image.yml; deploy/update.sh pulls it
     container_name: maybe-lite
     restart: unless-stopped
     env_file: .env                    # DATABASE_URL, PORT=3001, HOST=0.0.0.0, BACKUP_DIR=/backups, BACKUP_KEEP=30

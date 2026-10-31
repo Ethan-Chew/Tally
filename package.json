@@ -1,5 +1,5 @@
 {
-  "name": "maybe-lite",
+  "name": "tally",
   "private": true,
   "workspaces": [
     "server",

@@ -1,4 +1,4 @@
-# Maybe Lite: one image serving the API and the built web app on :3001.
+# Tally: one image serving the API and the built web app on :3001.
 # The build stage only emits JavaScript and static files, so it runs on the builder's own CPU even when the image targets arm64.
 FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app

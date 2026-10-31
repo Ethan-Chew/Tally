@@ -1,6 +1,6 @@
 # Your data: where it lives, and how to keep it safe
 
-Maybe Lite stores everything in **one PostgreSQL database** (the same tables the original Maybe app used).
+Tally stores everything in **one PostgreSQL database** (the same tables the original Maybe app used).
 The app itself keeps nothing on disk, so the database *is* your data. Back it up.
 
 The connection is the `DATABASE_URL` line in `.env`. Settings → Data in the app shows where it points,
