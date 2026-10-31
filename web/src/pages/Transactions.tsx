@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, type Entry } from "../api";
 import { EntryList } from "../components/EntryList";
 import { TransactionModal, TransferModal } from "../components/EntryForms";
@@ -15,12 +15,14 @@ export default function Transactions() {
   const categories = useCategories().data ?? [];
   const tags = useTags().data ?? [];
 
-  const [f, setF] = useState(EMPTY);
+  // other pages (cash flow, reports) link here with filters in the URL
+  const [params] = useSearchParams();
+  const [f, setF] = useState(() => ({ ...EMPTY, ...Object.fromEntries(Object.keys(EMPTY).map((k) => [k, params.get(k) ?? ""]).filter(([, v]) => v)) } as typeof EMPTY));
   const [debouncedQ, setDebouncedQ] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Entry | "new" | null>(null);
   const [transfer, setTransfer] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(() => Object.keys(EMPTY).some((k) => k !== "q" && params.get(k)));
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(f.q), 250);

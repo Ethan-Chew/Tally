@@ -68,6 +68,7 @@ export default function CalendarPage() {
         <div className="flex items-center gap-4">
           <h1 className="page-title">Calendar</h1>
           <Link to="/recurring" className="btn"><Icon name="repeat" className="h-4 w-4" />Recurring</Link>
+          <Link to="/cashflow" className="btn"><Icon name="trend" className="h-4 w-4" />Cash flow</Link>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1">
           <button className="icon-btn !h-8 !w-8" onClick={() => setMonth(data.prev_month)} aria-label="Previous month"><Icon name="chevronLeft" /></button>

@@ -61,7 +61,7 @@ export function Pills<T extends string>({ value, options, onChange }: { value: T
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={cx("rounded-full px-3.5 py-1.5 text-xs font-medium transition", value === o.value ? "bg-white text-accent shadow-sm" : "text-zinc-500 hover:text-zinc-900")}
+          className={cx("whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition", value === o.value ? "bg-white text-accent shadow-sm" : "text-zinc-500 hover:text-zinc-900")}
         >
           {o.label}
         </button>
