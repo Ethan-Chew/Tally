@@ -3,6 +3,7 @@ import { z } from "zod";
 import { NOW, one, query, tx } from "../db.js";
 import { fxJoin, fxRate } from "../fx.js";
 import { HttpError, parse, today, uuid } from "../util.js";
+import { loadRecurring } from "./recurring.js";
 
 const monthRe = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -91,7 +92,33 @@ async function loadBudget(familyId: string, currency: string, month: string) {
   const totals = await periodTotals(familyId, budget.currency, start, end);
   const daily = await dailySpending(familyId, budget.currency, start, end);
   const spentBy = new Map(totals.map((t) => [t.category_id, t.spent]));
-  const categories = cats.map((c) => ({ ...c, actual_spending: spentBy.get(c.category_id) ?? 0 }));
+  // Fixed / Flexible / Non-monthly are worked out, not stored: a category is "fixed" when recurring monthly bills make up most of
+  // what it holds, "non-monthly" when that is mostly quarterly or yearly bills, and "flexible" otherwise.
+  const recurring = (await loadRecurring(familyId, budget.currency)).filter((r) => r.active && r.direction === "expense" && r.category_id);
+  const billed = new Map<string, { fixed: number; non_monthly: number }>();
+  for (const r of recurring) {
+    const b = billed.get(r.category_id!) ?? { fixed: 0, non_monthly: 0 };
+    if (r.cadence === "quarterly" || r.cadence === "yearly") b.non_monthly += r.monthly; else b.fixed += r.monthly;
+    billed.set(r.category_id!, b);
+  }
+  const bucketOf = (id: string, budgeted: number, actual: number) => {
+    const b = billed.get(id);
+    const size = Math.max(budgeted, actual);
+    if (!b || size <= 0) return "flexible";
+    if (b.fixed >= size * 0.6) return "fixed";
+    if (b.non_monthly >= size * 0.6) return "non_monthly";
+    return "flexible";
+  };
+  const categories = cats.map((c) => {
+    const actual = spentBy.get(c.category_id) ?? 0;
+    return { ...c, actual_spending: actual, bucket: bucketOf(c.category_id, c.budgeted_spending, actual) as "fixed" | "flexible" | "non_monthly" };
+  });
+  const incomeCats = await query<{ id: string; name: string; color: string; lucide_icon: string }>("SELECT id, name, color, lucide_icon FROM categories WHERE family_id = $1", [familyId]);
+  const catById = new Map(incomeCats.map((c) => [c.id, c]));
+  const income_categories = totals
+    .filter((t) => t.income > 0.005)
+    .map((t) => ({ category_id: t.category_id, name: t.category_id ? (catById.get(t.category_id)?.name ?? "Unknown") : "Uncategorized", color: t.category_id ? (catById.get(t.category_id)?.color ?? "#9ca3af") : "#9ca3af", lucide_icon: t.category_id ? (catById.get(t.category_id)?.lucide_icon ?? null) : null, actual: t.income }))
+    .sort((a, b) => b.actual - a.actual);
 
   const allocated = categories.reduce((s, c) => s + c.budgeted_spending, 0);
   const actualSpending = totals.reduce((s, t) => s + t.spent, 0);
@@ -117,6 +144,7 @@ async function loadBudget(familyId: string, currency: string, month: string) {
     actual_income: actualIncome,
     daily,
     categories,
+    income_categories,
   };
 }
 

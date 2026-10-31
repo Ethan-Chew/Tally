@@ -42,11 +42,12 @@ export interface Entry {
 export interface EntriesResponse { rows: Entry[]; total: number; income: number; expense: number; page: number; per_page: number; currency: string }
 export interface Category { id: string; name: string; color: string; classification: "expense" | "income"; lucide_icon: string; parent_id: string | null; usage: number }
 export interface Named { id: string; name: string; color: string; usage: number }
-export interface BudgetCategory { category_id: string; name: string; color: string; lucide_icon: string; budgeted_spending: number; actual_spending: number}
+export interface BudgetCategory { category_id: string; name: string; color: string; lucide_icon: string; budgeted_spending: number; actual_spending: number; bucket: "fixed" | "flexible" | "non_monthly" }
 export interface Budget {
   id: string; month: string; prev_month: string; next_month: string; currency: string; budgeted_spending: number; budgeted_spending_set: boolean;
   expected_income: number; allocated_spending: number; unallocated_spending: number; actual_spending: number; uncategorized_spending: number;
   actual_income: number; daily: { date: string; spent: number }[]; categories: BudgetCategory[];
+  income_categories: { category_id: string | null; name: string; color: string; lucide_icon: string | null; actual: number }[];
 }
 export interface Dashboard {
   currency: string; period: string;

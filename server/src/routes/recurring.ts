@@ -9,8 +9,8 @@ const LOOKBACK_DAYS = 548; // about 18 months: enough for a yearly charge to sho
 /** Repeating charges and deposits found in the transaction history (read-only, nothing is stored). Transfers and excluded entries are left out. */
 export async function loadRecurring(familyId: string, currency: string): Promise<Recurring[]> {
   const now = today();
-  const rows = await query<{ date: string; amount: number; name: string; merchant: string | null }>(
-    `SELECT e.date::text AS date, e.amount * ${fxRate("fx")} AS amount, e.name, m.name AS merchant
+  const rows = await query<{ date: string; amount: number; name: string; merchant: string | null; category_id: string | null }>(
+    `SELECT e.date::text AS date, e.amount * ${fxRate("fx")} AS amount, e.name, m.name AS merchant, t.category_id
      FROM account_entries e
      JOIN accounts a ON a.id = e.account_id AND a.family_id = $1 AND a.is_active
      JOIN account_transactions t ON e.entryable_type = 'Account::Transaction' AND t.id = e.entryable_id

@@ -1,7 +1,7 @@
 import { addDays } from "./util.js";
 
 /** One transaction as the detector sees it: amount in the home currency, positive = money out. */
-export type Txn = { date: string; amount: number; name: string; merchant: string | null };
+export type Txn = { date: string; amount: number; name: string; merchant: string | null; category_id?: string | null };
 
 export type Cadence = "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
 
@@ -9,6 +9,7 @@ export type Recurring = {
   key: string;
   name: string;
   direction: "expense" | "income";
+  category_id: string | null; // the category most of its charges were filed under
   cadence: Cadence;
   amount: number; // typical amount, always positive
   monthly: number; // what it costs (or pays) per month on average
@@ -114,6 +115,9 @@ export function detectRecurring(txns: Txn[], today: string): Recurring[] {
     if (close / amounts.length < 0.7) continue;
 
     const last = items[items.length - 1]!;
+    const votes = new Map<string, number>();
+    for (const t of items) if (t.category_id) votes.set(t.category_id, (votes.get(t.category_id) ?? 0) + 1);
+    const category_id = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     // recent amounts are the best guess for the next one; the median of the last three ignores a one-off
     const amount = median(items.slice(-3).map((t) => Math.abs(t.amount)));
     const next = step(last.date, c.cadence);
@@ -122,6 +126,7 @@ export function detectRecurring(txns: Txn[], today: string): Recurring[] {
       key,
       name: g.name,
       direction: g.direction,
+      category_id,
       cadence: c.cadence,
       amount,
       monthly: amount * c.perMonth,
