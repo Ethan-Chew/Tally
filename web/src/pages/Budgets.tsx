@@ -35,17 +35,17 @@ function InlineAmount({ value, onSave, label, className, fit }: { value: number;
   );
 }
 
-/** Segmented ring: one arc per category, sized against the larger of budget and spending. */
-function Ring({ segments, scale, size = 232 }: { segments: { color: string; value: number }[]; scale: number; size?: number }) {
-  const stroke = 14, r = (size - stroke) / 2, C = 2 * Math.PI * r, gap = 5;
+/** Thin segmented ring: one arc per category, sized against the larger of budget and spending. */
+function Ring({ segments, scale, size = 268 }: { segments: { color: string; value: number }[]; scale: number; size?: number }) {
+  const stroke = 7, r = (size - stroke) / 2, C = 2 * Math.PI * r, gap = 14; // gap = visible space between arcs
   let offset = 0;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-zinc-100)" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-zinc-100)" strokeWidth={1.5} />
       {segments.map((s, i) => {
         const full = (s.value / scale) * C;
-        const len = full - gap;
-        const el = len > 1 ? <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-offset} /> : null;
+        const len = full - gap - stroke; // round caps add stroke/2 at each end
+        const el = len > 0.5 ? <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-(offset + (gap + stroke) / 2)} /> : null;
         offset += full;
         return el;
       })}
@@ -138,22 +138,18 @@ export default function Budgets() {
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
         {/* left: ring + summaries */}
         <div className="space-y-6">
-          <section className="card p-6 sm:p-7">
+          <section className="card px-6 py-10 sm:py-12">
             <div className="relative mx-auto flex w-fit items-center justify-center">
               <Ring segments={segs} scale={scale} />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="eyebrow">Spent</div>
-                <div className={cx("mt-1 text-[30px] font-semibold leading-none tabular-nums tracking-tight", over && "text-rose-600")}>{money(b.actual_spending, cur, { maximumFractionDigits: 0 })}</div>
-                <div className="mt-3 flex items-center gap-1 rounded-full bg-soft px-3 py-1 text-[13px] text-zinc-600">
-                  of <InlineAmount fit className="!px-1 !text-left font-medium text-zinc-900" label="Total monthly budget" value={total} onSave={(n) => save.mutate({ budgeted_spending: n })} />
+                <div className="text-[13px] text-zinc-500">Spent</div>
+                <div className={cx("mt-1.5 text-[32px] font-semibold leading-none tabular-nums tracking-tight", over ? "text-rose-600" : "text-zinc-900")}>{money(b.actual_spending, cur, { maximumFractionDigits: 0 })}</div>
+                <div className="mt-4 flex items-center gap-1.5 rounded-full bg-soft px-3.5 py-1.5 text-[13px] text-zinc-600">
+                  of <span className="text-zinc-400">{cur}</span>
+                  <InlineAmount fit className="!px-0.5 !text-left font-medium text-zinc-900" label="Total monthly budget" value={total} onSave={(n) => save.mutate({ budgeted_spending: n })} />
                   <Icon name="edit" className="h-3.5 w-3.5 text-zinc-400" />
                 </div>
               </div>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              <span className={cx("rounded-full px-3 py-1 text-xs font-medium", tone)}>{status.label}</span>
-              {view.isCurrent && total > 0 && remaining > 0 && <span className="chip !bg-soft !text-zinc-700">{f0(remaining / view.daysLeft)} / day</span>}
-              {view.isCurrent && <span className={cx("chip !bg-soft", total > 0 && view.projected > total ? "!text-amber-600" : "!text-zinc-700")}>→ {f0(view.projected)}</span>}
             </div>
           </section>
 
@@ -174,6 +170,11 @@ export default function Budgets() {
               <div className="mt-3 flex justify-between text-[13px]">
                 <span className="muted">{f0(b.actual_spending)} spent</span>
                 {total > 0 && <span className={over ? "text-rose-600" : "muted"}>{over ? `${f0(-remaining)} over` : `${f0(remaining)} left`}</span>}
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className={cx("rounded-full px-3 py-1 text-xs font-medium", tone)}>{status.label}</span>
+                {view.isCurrent && total > 0 && remaining > 0 && <span className="chip !bg-soft !text-zinc-700">{f0(remaining / view.daysLeft)} / day</span>}
+                {view.isCurrent && <span className={cx("chip !bg-soft", total > 0 && view.projected > total ? "!text-amber-600" : "!text-zinc-700")}>→ {f0(view.projected)}</span>}
               </div>
             </div>
           </section>
