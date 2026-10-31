@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { query } from "../db.js";
 import { fxJoin, fxRate } from "../fx.js";
+import { dueDates } from "../recurring.js";
 import { HttpError } from "../util.js";
+import { loadRecurring } from "./recurring.js";
 
 /** Day-by-day spending for one month, in the home currency. Transfers and excluded entries are left out, as in budgets. */
 export async function calendarRoutes(app: FastifyInstance) {
@@ -44,12 +46,19 @@ export async function calendarRoutes(app: FastifyInstance) {
     const days = [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date));
     for (const d of days) d.categories.sort((a, b) => b.amount - a.amount);
 
+    // bills still to come: expected dates of active recurring items that fall in this month and have no entry yet
+    const upcoming = (await loadRecurring(req.user.familyId, req.user.currency))
+      .filter((r) => r.active)
+      .flatMap((r) => dueDates(r, start, end).filter((d) => d > r.last_date).map((date) => ({ date, name: r.name, amount: r.amount, direction: r.direction })))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
     const totalSpent = days.reduce((s, d) => s + d.spent, 0);
     const spendDays = days.filter((d) => d.spent > 0);
     const biggest = spendDays.reduce<(typeof days)[number] | null>((b, d) => (!b || d.spent > b.spent ? d : b), null);
     return {
       month, prev_month: shift(-1), next_month: shift(1), currency: req.user.currency,
       days,
+      upcoming,
       total_spent: totalSpent,
       total_income: days.reduce((s, d) => s + d.income, 0),
       spend_days: spendDays.length,

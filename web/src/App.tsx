@@ -16,6 +16,7 @@ const loaders = {
   "/transactions": () => import("./pages/Transactions"),
   "/calendar": () => import("./pages/Calendar"),
   "/budgets": () => import("./pages/Budgets"),
+  "/recurring": () => import("./pages/Recurring"),
   "/settings": () => import("./pages/Settings"),
   "/settings/import": () => import("./pages/Import"),
   "/settings/categories": () => import("./pages/Manage"),
@@ -28,8 +29,9 @@ const NAV = [
   { to: "/transactions", label: "Activity", full: "Transactions", icon: "transactions" },
   { to: "/calendar", label: "Calendar", icon: "calendar" },
   { to: "/budgets", label: "Budgets", icon: "budgets" },
+  { to: "/recurring", label: "Recurring", icon: "repeat", desktopOnly: true }, // phones reach it from the Calendar page: the tab bar is full
   { to: "/settings", label: "Settings", icon: "settings" },
-];
+] as { to: string; label: string; full?: string; icon: string; end?: boolean; desktopOnly?: boolean }[];
 
 const warm = (to: string) => loaders[to as keyof typeof loaders]?.();
 
@@ -109,7 +111,7 @@ export default function App() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-zinc-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Main">
-        {NAV.map((n) => (
+        {NAV.filter((n) => !n.desktopOnly).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cx("flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 pb-2 pt-2.5 text-[10px] font-medium", isActive ? "text-accent" : "text-zinc-400")}>
             <Icon name={n.icon} className="h-5 w-5" />{n.label}
           </NavLink>

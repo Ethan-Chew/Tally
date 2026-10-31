@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, qs, type EntriesResponse } from "../api";
 import { Amount } from "../components/EntryList";
@@ -10,6 +11,7 @@ import { isHidden, MASK } from "../privacy";
 interface Day { date: string; spent: number; income: number; count: number; categories: { name: string; color: string; icon: string | null; amount: number }[] }
 interface Cal {
   month: string; prev_month: string; next_month: string; currency: string; days: Day[];
+  upcoming: { date: string; name: string; amount: number; direction: "expense" | "income" }[];
   total_spent: number; total_income: number; spend_days: number; biggest_day: { date: string; spent: number } | null;
 }
 
@@ -56,12 +58,16 @@ export default function CalendarPage() {
   const avg = elapsed > 0 ? data.total_spent / elapsed : 0;
   const noSpend = Math.max(0, elapsed - data.spend_days);
   const sel = byDate.get(selected);
+  const dueByDate = new Map<string, Cal["upcoming"]>();
+  for (const u of data.upcoming) dueByDate.set(u.date, [...(dueByDate.get(u.date) ?? []), u]);
+  const dueToday = dueByDate.get(selected) ?? [];
 
   return (
     <div className="space-y-8 sm:space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-4">
           <h1 className="page-title">Calendar</h1>
+          <Link to="/recurring" className="btn"><Icon name="repeat" className="h-4 w-4" />Recurring</Link>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1">
           <button className="icon-btn !h-8 !w-8" onClick={() => setMonth(data.prev_month)} aria-label="Previous month"><Icon name="chevronLeft" /></button>
@@ -111,6 +117,11 @@ export default function CalendarPage() {
                   style={heat ? { backgroundColor: `rgba(82,102,235,${heat})` } : undefined}
                 >
                   <span className={cx("inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium", isToday ? "bg-zinc-900 text-white" : "text-zinc-600")}>{Number(date.slice(8))}</span>
+                  {dueByDate.has(date) && (
+                    <span title={dueByDate.get(date)!.map((u) => `${u.name}: ${money(u.amount, cur)}`).join("\n")} className="absolute right-1.5 top-1.5 flex h-5 items-center gap-0.5 rounded-full bg-tint px-1.5 text-[10px] font-semibold text-accent sm:right-2.5 sm:top-2.5">
+                      <Icon name="repeat" className="h-2.5 w-2.5" />{dueByDate.get(date)!.length}
+                    </span>
+                  )}
                   {d && d.spent > 0 && (
                     <span className="mt-auto">
                       <span className="block text-[13px] font-semibold tabular-nums leading-tight">{short(d.spent)}</span>
@@ -152,6 +163,20 @@ export default function CalendarPage() {
               </div>
             )}
           </div>
+
+          {dueToday.length > 0 && (
+            <div className="border-t border-zinc-100">
+              <div className="eyebrow px-5 pb-2 pt-5 sm:px-7">Expected</div>
+              <ul className="divide-y divide-zinc-100">
+                {dueToday.map((u) => (
+                  <li key={u.name + u.direction} className="flex items-center justify-between gap-3 px-5 py-3 text-sm sm:px-7">
+                    <span className="flex min-w-0 items-center gap-2"><Icon name="repeat" className="h-3.5 w-3.5 shrink-0 text-accent" /><span className="truncate">{u.name}</span></span>
+                    <span className="shrink-0 font-medium tabular-nums">{u.direction === "income" ? "+" : ""}{money(u.amount, cur)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="border-t border-zinc-100">
             <div className="eyebrow px-5 pb-2 pt-5 sm:px-7">Transactions</div>
