@@ -1,0 +1,21 @@
+# Optional: run the database in Docker instead of a local Postgres install.
+#   docker compose up -d     then put this in .env:
+#   DATABASE_URL=postgres://maybe:maybe@localhost:5433/maybe
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: maybe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-maybe}
+      POSTGRES_DB: maybe
+    ports:
+      - "127.0.0.1:5433:5432"   # localhost only
+    volumes:
+      - maybe_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maybe -d maybe"]
+      interval: 5s
+      retries: 10
+volumes:
+  maybe_pgdata:

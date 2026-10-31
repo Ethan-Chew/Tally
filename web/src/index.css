@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* Light theme only: `dark:` utilities stay inert unless a .dark class is added. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-accent: #5266eb;
+  /* secondary: a soft lavender used for chips, icon circles, active nav and secondary buttons */
+  --color-tint: #eef0fd;
+  --color-tint-strong: #dfe3fb;
+  --color-soft: #f2f3f9;
+  --color-page: #fafafb;
+}
+
+html { color-scheme: light; }
+:root { --chart-axis: #a1a1aa; --chart-grid: #f4f4f5; --chart-line: #e4e4e7; }
+
+/* Dark theme: the neutral scale is inverted and the tints/status colours re-balanced, so every utility class flips at once. */
+.dark {
+  color-scheme: dark;
+  --color-white: #17181c;
+  --color-page: #0e0f12;
+  --color-zinc-50: #1b1c21;
+  --color-zinc-100: #212228;
+  --color-zinc-200: #2b2d35;
+  --color-zinc-300: #3a3d47;
+  --color-zinc-400: #727684;
+  --color-zinc-500: #9a9eac;
+  --color-zinc-600: #b3b7c3;
+  --color-zinc-700: #ced1da;
+  --color-zinc-800: #e4e6ec;
+  --color-zinc-900: #f4f5f8;
+  --color-zinc-950: #fafafa;
+  --color-accent: #7b8cff;
+  --color-tint: #232852;
+  --color-tint-strong: #2e3566;
+  --color-soft: #23252c;
+  --color-emerald-50: #10261e; --color-emerald-600: #34d399; --color-emerald-700: #6ee7b7;
+  --color-rose-50: #2d171d;    --color-rose-600: #fb7185;    --color-rose-700: #fda4af;
+  --color-red-50: #2d171d;     --color-red-100: #3a1d25; --color-red-700: #fca5a5;     --color-red-500: #f87171; --color-red-600: #f87171;
+  --color-amber-50: #2c2210;   --color-amber-600: #fbbf24;   --color-amber-700: #fcd34d;
+  --chart-axis: #6c707d; --chart-grid: #23252c; --chart-line: #31343d;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: #5266eb; }
+body {
+  @apply bg-page text-zinc-900 antialiased;
+  font-size: 14px; /* un-sized text is 14px (was 16px); text-xs = 12px, titles/stat below */
+  line-height: 1.5;
+  font-feature-settings: "cv11", "ss01";
+}
+
+@layer components {
+  /* surfaces */
+  .card { @apply rounded-2xl border border-zinc-200/80 bg-white; }
+  .card-head { @apply flex items-center justify-between gap-4 border-b border-zinc-100 px-5 py-5 sm:px-7; }
+  .card-body { @apply p-5 sm:p-7; }
+
+  /* type: titles are clearly separated from body text by size, weight, colour and spacing */
+  .page-title { @apply text-[28px] font-semibold leading-tight tracking-tight text-zinc-900; }
+  .page-sub { @apply mt-2 text-sm text-zinc-500; }
+  .section-title { @apply text-[18px] font-semibold leading-snug tracking-tight text-zinc-900; }
+  .card-sub { @apply mt-1 text-[13px] text-zinc-500; }
+  .eyebrow { @apply text-xs font-medium text-zinc-500; }
+  .hero-num { @apply text-[32px] font-semibold leading-none tabular-nums tracking-tight; }
+  .muted { @apply text-zinc-500; }
+  .stat { @apply text-[22px] font-semibold tabular-nums tracking-tight text-zinc-900; }
+
+  /* controls */
+  .btn { @apply inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-soft px-4 text-[13px] font-medium text-zinc-800 transition hover:bg-tint-strong disabled:opacity-50; }
+  .btn-primary { @apply bg-accent text-white hover:opacity-90; }
+  .dark .btn-primary { color: #0e0f12; }
+  .btn-danger { @apply bg-red-50 text-red-600 hover:bg-red-100; }
+  .btn-ghost { @apply bg-transparent hover:bg-soft; }
+  .icon-btn { @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-soft text-zinc-600 transition hover:bg-tint-strong hover:text-accent; }
+  .icon-circle { @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tint text-accent; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full bg-tint px-3 py-1 text-xs font-medium text-accent; }
+  .input { @apply h-8 w-full rounded-lg border border-zinc-200 bg-white px-3 text-[13px] outline-none transition placeholder:text-zinc-400 focus:border-accent focus:ring-4 focus:ring-accent/10; }
+  textarea.input { @apply h-auto py-2; }
+  .label { @apply mb-1.5 block text-xs font-medium text-zinc-600; }
+  .pill { @apply rounded-full px-2 py-0.5 text-[11px] font-medium; }
+
+  /* tables */
+  .th { @apply px-4 py-2.5 text-left text-xs font-medium text-zinc-500 first:pl-5 last:pr-5 sm:first:pl-7 sm:last:pr-7; }
+  .td { @apply px-4 py-3 text-[13px] first:pl-5 last:pr-5 sm:first:pl-7 sm:last:pr-7; }
+}
+
+@keyframes shimmer { 0% { opacity: 1 } 50% { opacity: .45 } 100% { opacity: 1 } }
+.skeleton { @apply rounded-lg bg-zinc-100; animation: shimmer 1.4s ease-in-out infinite; }
