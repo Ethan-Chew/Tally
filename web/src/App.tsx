@@ -17,6 +17,7 @@ const loaders = {
   "/calendar": () => import("./pages/Calendar"),
   "/budgets": () => import("./pages/Budgets"),
   "/cashflow": () => import("./pages/CashFlow"),
+  "/reports": () => import("./pages/Reports"),
   "/recurring": () => import("./pages/Recurring"),
   "/settings": () => import("./pages/Settings"),
   "/settings/import": () => import("./pages/Import"),
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/calendar", label: "Calendar", icon: "calendar" },
   { to: "/budgets", label: "Budgets", icon: "budgets" },
   { to: "/cashflow", label: "Cash flow", icon: "trend", desktopOnly: true },
+  { to: "/reports", label: "Reports", icon: "budgets", desktopOnly: true },
   { to: "/recurring", label: "Recurring", icon: "repeat", desktopOnly: true }, // phones reach it from the Calendar page: the tab bar is full
   { to: "/settings", label: "Settings", icon: "settings" },
 ] as { to: string; label: string; full?: string; icon: string; end?: boolean; desktopOnly?: boolean }[];
