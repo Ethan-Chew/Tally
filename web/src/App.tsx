@@ -18,6 +18,7 @@ const loaders = {
   "/budgets": () => import("./pages/Budgets"),
   "/cashflow": () => import("./pages/CashFlow"),
   "/reports": () => import("./pages/Reports"),
+  "/reports/income": () => import("./pages/Reports"),
   "/recurring": () => import("./pages/Recurring"),
   "/settings": () => import("./pages/Settings"),
   "/settings/import": () => import("./pages/Import"),
@@ -31,8 +32,7 @@ const NAV = [
   { to: "/transactions", label: "Activity", full: "Transactions", icon: "transactions" },
   { to: "/calendar", label: "Calendar", icon: "calendar" },
   { to: "/budgets", label: "Budgets", icon: "budgets" },
-  { to: "/cashflow", label: "Cash flow", icon: "trend", desktopOnly: true },
-  { to: "/reports", label: "Reports", icon: "budgets", desktopOnly: true },
+  { to: "/reports", label: "Reports", icon: "trend", desktopOnly: true },
   { to: "/recurring", label: "Recurring", icon: "repeat", desktopOnly: true }, // phones reach it from the Calendar page: the tab bar is full
   { to: "/settings", label: "Settings", icon: "settings" },
 ] as { to: string; label: string; full?: string; icon: string; end?: boolean; desktopOnly?: boolean }[];
@@ -74,7 +74,7 @@ export default function App() {
         <nav className="flex flex-col gap-1" aria-label="Main">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} onMouseEnter={() => warm(n.to)}
-              className={({ isActive }) => cx("flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-[13.5px] font-medium transition-colors", isActive ? "bg-tint text-accent" : "text-zinc-500 hover:bg-soft hover:text-zinc-900")}>
+              className={({ isActive }) => cx("flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-[13.5px] font-medium transition-colors", isActive || (n.to === "/reports" && loc.pathname === "/cashflow") ? "bg-tint text-accent" : "text-zinc-500 hover:bg-soft hover:text-zinc-900")}>
               <Icon name={n.icon} />{n.full ?? n.label}
             </NavLink>
           ))}

@@ -4,7 +4,7 @@ import { query } from "../db.js";
 import { fxJoin, fxRate } from "../fx.js";
 import { isoDate, parse, round2 } from "../util.js";
 
-const MAX_SERIES = 8;
+const MAX_SERIES = 11; // plus one "Other" slice: twelve legend entries fit the donut's grid
 const GREY = "#9ca3af";
 
 // what each grouping selects and joins; transactions with several tags count once under each tag
@@ -41,6 +41,18 @@ export async function reportRoutes(app: FastifyInstance) {
       [req.user.familyId, req.user.currency, q.from, q.to],
     );
 
+    // headline numbers for the summary card, counted once per transaction (a tag grouping can list one under several tags)
+    const [stats] = await query<{ n: number; largest: number | null; total: number | null }>(
+      `SELECT count(*)::int AS n, max(abs(e.amount) * ${fxRate("fx")}) AS largest, sum(abs(e.amount) * ${fxRate("fx")}) AS total
+       FROM account_entries e
+       JOIN accounts a ON a.id = e.account_id AND a.family_id = $1
+       JOIN account_transactions t ON e.entryable_type = 'Account::Transaction' AND t.id = e.entryable_id
+       ${fxJoin("fx", "e.currency", "e.date", "$2")}
+       WHERE e.date BETWEEN $3 AND $4 AND NOT e.excluded AND ${sign}
+         AND NOT EXISTS (SELECT 1 FROM transfers tr WHERE tr.inflow_transaction_id = t.id OR tr.outflow_transaction_id = t.id)`,
+      [req.user.familyId, req.user.currency, q.from, q.to],
+    );
+
     // every month in the range, so empty months still show as gaps in the chart
     const months: string[] = [];
     for (let d = new Date(q.from.slice(0, 7) + "-01T00:00:00Z"); d.toISOString().slice(0, 10) <= q.to; d.setUTCMonth(d.getUTCMonth() + 1)) months.push(d.toISOString().slice(0, 7));
@@ -62,6 +74,7 @@ export async function reportRoutes(app: FastifyInstance) {
     if (rest.length) {
       series.push({ id: null, name: `Other (${rest.length})`, color: GREY, total: round2(rest.reduce((s, r) => s + r.total, 0)), values: months.map((_, i) => round2(rest.reduce((s, r) => s + r.values[i]!, 0))) });
     }
-    return { currency: req.user.currency, from: q.from, to: q.to, group: q.group, kind: q.kind, months, series, total: round2(all.reduce((s, r) => s + r.total, 0)) };
+    return { currency: req.user.currency, from: q.from, to: q.to, group: q.group, kind: q.kind, months, series, total: round2(all.reduce((s, r) => s + r.total, 0)),
+      summary: { count: stats?.n ?? 0, largest: round2(stats?.largest ?? 0), average: stats?.n ? round2((stats.total ?? 0) / stats.n) : 0, total: round2(stats?.total ?? 0) } };
   });
 }

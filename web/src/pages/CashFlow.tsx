@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ResponsiveContainer, Sankey, Tooltip } from "recharts";
 import { api, qs } from "../api";
 import { CatBadge, Empty, PageSkeleton, Pills } from "../components/ui";
-import { cx, fmtDate, money, todayStr } from "../lib";
+import { ReportTabs } from "../components/ReportTabs";
+import { cx, fmtDate, money } from "../lib";
+import { bounds, type Range } from "../ranges";
 
 interface Node { id: string; name: string; color: string; icon: string | null; amount: number }
 interface Totals { income: number; expenses: number; net: number; savings_rate: number | null }
@@ -13,26 +15,10 @@ interface Resp {
   totals: Totals; previous: Totals & { from: string; to: string };
 }
 
-type Range = "month" | "last" | "3m" | "6m" | "ytd" | "12m";
 const RANGES: { value: Range; label: string }[] = [
   { value: "month", label: "This month" }, { value: "last", label: "Last month" }, { value: "3m", label: "3M" },
   { value: "6m", label: "6M" }, { value: "ytd", label: "YTD" }, { value: "12m", label: "12M" },
 ];
-
-const iso = (d: Date) => d.toLocaleDateString("en-CA");
-function bounds(r: Range): { from: string; to: string } {
-  const t = new Date(todayStr() + "T00:00:00");
-  const y = t.getFullYear(), m = t.getMonth();
-  const first = (back: number) => iso(new Date(y, m - back, 1));
-  switch (r) {
-    case "month": return { from: first(0), to: iso(t) };
-    case "last": return { from: first(1), to: iso(new Date(y, m, 0)) };
-    case "3m": return { from: first(2), to: iso(t) };
-    case "6m": return { from: first(5), to: iso(t) };
-    case "ytd": return { from: `${y}-01-01`, to: iso(t) };
-    case "12m": return { from: first(11), to: iso(t) };
-  }
-}
 
 const GREY = "#9ca3af";
 const MAX_DESTINATIONS = 9;
@@ -109,11 +95,12 @@ export default function CashFlowPage() {
     <div className="space-y-8 sm:space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="page-title">Cash flow</h1>
+          <h1 className="page-title">Reports</h1>
           <p className="muted mt-1 text-sm">{fmtDate(d.from)} – {fmtDate(d.to)}</p>
         </div>
         <div className="max-w-full overflow-x-auto"><Pills value={range} onChange={setRange} options={RANGES} /></div>
       </div>
+      <ReportTabs />
 
       <section className="card grid grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-zinc-100">
         {[
