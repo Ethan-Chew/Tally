@@ -129,3 +129,20 @@ export function CatBadge({ name, color, icon, transfer, size = "md" }: { name: s
     </span>
   );
 }
+
+/** A tiny trend line with a dashed baseline at the starting value, like the account rows in Monarch. */
+export function Sparkline({ values, good = true, className }: { values: number[] | null | undefined; good?: boolean; className?: string }) {
+  if (!values || values.length < 2) return <div className={cx("h-8 w-28", className)} />;
+  const w = 112, h = 32, pad = 3;
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min || 1;
+  const x = (i: number) => (i / (values.length - 1)) * w;
+  const y = (v: number) => h - pad - ((v - min) / span) * (h - pad * 2);
+  const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={cx("h-8 w-28", className)} aria-hidden="true">
+      <line x1="0" x2={w} y1={y(values[0]!)} y2={y(values[0]!)} stroke="var(--chart-line)" strokeDasharray="3 3" />
+      <path d={d} fill="none" stroke={good ? "#10b981" : "#ef4444"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

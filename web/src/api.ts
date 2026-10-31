@@ -27,7 +27,7 @@ export const qs = (params: Record<string, string | number | undefined | null>) =
 // ---- response types
 export interface Account {
   id: string; name: string; accountable_type: string; subtype: string | null; classification: "asset" | "liability";
-  balance: number; currency: string; is_active: boolean; balance_converted: number; balance_30d_ago: number | null;
+  balance: number; currency: string; is_active: boolean; balance_converted: number; rate: number; balance_30d_ago: number | null; spark: number[] | null;
 }
 export interface AccountsResponse { currency: string; assets: number; liabilities: number; net_worth: number; accounts: Account[] }
 export interface Tag { id: string; name: string; color: string }
@@ -42,7 +42,7 @@ export interface Entry {
 export interface EntriesResponse { rows: Entry[]; total: number; income: number; expense: number; page: number; per_page: number; currency: string }
 export interface Category { id: string; name: string; color: string; classification: "expense" | "income"; lucide_icon: string; parent_id: string | null; usage: number }
 export interface Named { id: string; name: string; color: string; usage: number }
-export interface BudgetCategory { category_id: string; name: string; color: string; lucide_icon: string; budgeted_spending: number; actual_spending: number }
+export interface BudgetCategory { category_id: string; name: string; color: string; lucide_icon: string; budgeted_spending: number; actual_spending: number}
 export interface Budget {
   id: string; month: string; prev_month: string; next_month: string; currency: string; budgeted_spending: number; budgeted_spending_set: boolean;
   expected_income: number; allocated_spending: number; unallocated_spending: number; actual_spending: number; uncategorized_spending: number;

@@ -31,8 +31,9 @@ export async function accountRoutes(app: FastifyInstance) {
     const cur = req.user.currency;
     const rows = await query<any>(
       `SELECT a.id, a.name, a.accountable_type, a.subtype, a.classification, a.balance, a.currency, a.is_active,
-              a.balance * ${fxRate("fx")} AS balance_converted,
-              (SELECT b.balance FROM account_balances b WHERE b.account_id = a.id AND b.date <= current_date - 30 ORDER BY b.date DESC LIMIT 1) AS balance_30d_ago
+              a.balance * ${fxRate("fx")} AS balance_converted, ${fxRate("fx")} AS rate,
+              (SELECT b.balance FROM account_balances b WHERE b.account_id = a.id AND b.date <= current_date - 30 ORDER BY b.date DESC LIMIT 1) AS balance_30d_ago,
+              (SELECT array_agg(b.balance::float8 ORDER BY b.date) FROM account_balances b WHERE b.account_id = a.id AND b.date > current_date - 30) AS spark
        FROM accounts a ${fxJoin("fx", "a.currency", "current_date", "$2")}
        WHERE a.family_id = $1
        ORDER BY a.is_active DESC, a.classification, a.balance * ${fxRate("fx")} DESC`,
