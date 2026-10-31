@@ -1,0 +1,17 @@
+# Example: run Maybe Lite next to an existing Maybe Postgres container, behind nginx proxy manager.
+# Adjust the external network names and the backup folder for your host. See docs/DATABASE.md.
+services:
+  app:
+    image: maybe-lite:latest          # docker build -t maybe-lite:latest .
+    container_name: maybe-lite
+    restart: unless-stopped
+    env_file: .env                    # DATABASE_URL, PORT=3001, HOST=0.0.0.0, BACKUP_DIR=/backups, BACKUP_KEEP=30
+    networks: [webproxy, maybe_default]
+    volumes:
+      - type: bind
+        source: /mnt/drive/finance-backups
+        target: /backups
+        bind: { create_host_path: false }
+networks:
+  webproxy: { external: true }       # the network nginx proxy manager is on
+  maybe_default: { external: true }  # the network the Postgres container is on

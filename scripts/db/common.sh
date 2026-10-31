@@ -47,4 +47,5 @@ redact() { echo "$1" | sed -E 's#(://[^:/@]+):[^@]*@#\1:***@#'; }
 human_size() { # bytes -> 12.3 MB
   awk -v b="$1" 'BEGIN{ split("B KB MB GB",u," "); i=1; while (b>=1024 && i<4) { b/=1024; i++ } printf "%.1f %s", b, u[i] }'
 }
-file_size() { stat -f%z "$1" 2>/dev/null || stat -c%s "$1"; }
+# GNU/BusyBox `stat -c%s` first; macOS/BSD falls through to `stat -f%z` (on Linux `stat -f` means "filesystem", so it must not go first)
+file_size() { stat -c%s "$1" 2>/dev/null || stat -f%z "$1"; }
