@@ -4,6 +4,7 @@ import { z } from "zod";
 import { NOW, query, tx } from "../db.js";
 import { recomputeAccount } from "../balances.js";
 import { guessMapping, inferDateFormat, parseAmount, parseCsv, parseDate } from "../csv.js";
+import { learnCategories, suggestCategory } from "../suggest.js";
 import { HttpError, parse, uuid } from "../util.js";
 import { ownedAccount } from "./accounts.js";
 
@@ -26,6 +27,8 @@ const body = z.object({
   expense_sign: z.enum(["positive", "negative"]).default("negative"),
   skip_duplicates: z.boolean().default(true),
   create_categories: z.boolean().default(false),
+  // rows with no category of their own get the one past transactions with the same description were filed under
+  suggest_categories: z.boolean().default(false),
   commit: z.boolean().default(false),
 });
 
@@ -102,9 +105,18 @@ export async function importRoutes(app: FastifyInstance) {
       });
     }
 
+    // a category named in the file wins; only rows without a usable one are filled from history
+    const learned = b.suggest_categories ? await learnCategories(req.user.familyId) : null;
+    const suggested = new Map<Parsed, string>();
+    if (learned) for (const p of toImport) {
+      if (p.category && (catByName.has(p.category.toLowerCase()) || b.create_categories)) continue;
+      const id = suggestCategory(learned, p.name);
+      if (id) suggested.set(p, id);
+    }
+
     const unknownCats = [...new Set(toImport.map((p) => p.category).filter((c) => c && !catByName.has(c.toLowerCase())))];
     const summary = {
-      account: acct.name, currency: acct.currency, date_format_used: dateFormat, total_rows: data.length, valid: parsed.length, to_import: toImport.length,
+      account: acct.name, currency: acct.currency, date_format_used: dateFormat, total_rows: data.length, valid: parsed.length, to_import: toImport.length, suggested: suggested.size,
       duplicates, errors: errors.slice(0, 50), error_count: errors.length, unknown_categories: unknownCats,
       preview: toImport.slice(0, 8).map((p) => ({ date: p.date, name: p.name, amount: p.amount, category: p.category })),
       income: toImport.filter((p) => p.amount < 0).reduce((s, p) => s - p.amount, 0),
@@ -131,7 +143,7 @@ export async function importRoutes(app: FastifyInstance) {
       await query(
         `INSERT INTO account_transactions (id, category_id, created_at, updated_at)
          SELECT i, cat, ${NOW}, ${NOW} FROM unnest($1::uuid[], $2::uuid[]) AS t(i, cat)`,
-        [ids, toImport.map((p) => catByName.get(p.category.toLowerCase()) ?? null)],
+        [ids, toImport.map((p) => catByName.get(p.category.toLowerCase()) ?? suggested.get(p) ?? null)],
         c,
       );
       await query(

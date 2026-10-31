@@ -20,6 +20,7 @@ import { importRoutes } from "./routes/import.js";
 import { systemRoutes } from "./routes/system.js";
 import { recurringRoutes } from "./routes/recurring.js";
 import { cashflowRoutes } from "./routes/cashflow.js";
+import { suggestRoutes } from "./routes/suggest.js";
 
 const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
 await app.register(compress, { threshold: 1024 });
@@ -46,7 +47,7 @@ app.setErrorHandler((err: any, _req, reply) => {
 
 registerOwner(app);
 app.get("/api/health", async () => ({ ok: true }));
-for (const r of [accountRoutes, entryRoutes, transferRoutes, taxonomyRoutes, budgetRoutes, dashboardRoutes, calendarRoutes, meRoutes, importRoutes, systemRoutes, recurringRoutes, cashflowRoutes]) await app.register(r);
+for (const r of [accountRoutes, entryRoutes, transferRoutes, taxonomyRoutes, budgetRoutes, dashboardRoutes, calendarRoutes, meRoutes, importRoutes, systemRoutes, recurringRoutes, cashflowRoutes, suggestRoutes]) await app.register(r);
 
 // In production, serve the built SPA
 const webDist = resolve(dirname(fileURLToPath(import.meta.url)), "../../web/dist");

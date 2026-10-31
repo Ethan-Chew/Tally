@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { api, type Entry } from "../api";
+import { useEffect, useState, type FormEvent } from "react";
+import { api, qs, type Entry } from "../api";
 import { useAccounts, useAction, useCategories, useMerchants, useTags } from "../hooks";
 import { cx, todayStr } from "../lib";
 import { ErrorNote, Field, Modal } from "./ui";
@@ -18,6 +18,19 @@ export function TransactionModal({ entry, defaultAccountId, onClose }: { entry?:
   const [accountId, setAccountId] = useState(entry?.account_id ?? defaultAccountId ?? accounts[0]?.id ?? "");
   const [categoryId, setCategoryId] = useState(entry?.category_id ?? "");
   const [merchant, setMerchant] = useState(entry?.merchant_name ?? "");
+  // while the category is empty, look up what similar past transactions were filed under and offer it (never applied silently)
+  const [suggestedId, setSuggestedId] = useState("");
+  useEffect(() => {
+    if (categoryId || name.trim().length < 3) { setSuggestedId(""); return; }
+    let live = true;
+    const t = setTimeout(() => {
+      api<{ category_id: string | null }>(`/api/suggest-category${qs({ name: name.trim(), merchant: merchant.trim() || undefined })}`)
+        .then((r) => live && setSuggestedId(r.category_id ?? ""))
+        .catch(() => live && setSuggestedId(""));
+    }, 350);
+    return () => { live = false; clearTimeout(t); };
+  }, [name, merchant, categoryId]);
+  const suggested = categories.find((c) => c.id === suggestedId);
   const [tagIds, setTagIds] = useState<string[]>(entry?.tags.map((t) => t.id) ?? []);
   const [notes, setNotes] = useState(entry?.notes ?? "");
   const [excluded, setExcluded] = useState(entry?.excluded ?? false);
@@ -69,6 +82,7 @@ export function TransactionModal({ entry, defaultAccountId, onClose }: { entry?:
                 <optgroup label="Other">{categories.filter((c) => c.classification !== type).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</optgroup>
               )}
             </select>
+            {suggested && <button type="button" className="mt-1.5 text-xs text-accent hover:underline" onClick={() => setCategoryId(suggested.id)}>Use “{suggested.name}”, like similar transactions</button>}
           </Field>
           <Field label="Merchant">
             <input className="input" list="merchant-list" value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder="Optional" />

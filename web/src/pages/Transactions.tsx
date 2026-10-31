@@ -68,6 +68,7 @@ export default function Transactions() {
               <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <input className="input !h-10 !rounded-xl !pl-10" type="search" placeholder="Search transactions" aria-label="Search" value={f.q} onChange={(e) => set("q")(e.target.value)} />
             </div>
+            <button className={cx("btn !h-10 !rounded-xl", f.category_id === "none" && "!bg-tint !text-accent")} aria-pressed={f.category_id === "none"} onClick={() => set("category_id")(f.category_id === "none" ? "" : "none")}>Needs review</button>
             <button className={cx("btn !h-10 !rounded-xl", filtersOpen && "!bg-tint !text-accent")} onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen}>
               <Icon name="filter" className="h-4 w-4" />Filter{filterCount > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] text-white">{filterCount}</span>}
             </button>

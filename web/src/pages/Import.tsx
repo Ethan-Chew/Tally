@@ -9,7 +9,7 @@ import { cx, fmtDate, money } from "../lib";
 
 interface Described { delimiter: string; headers: string[]; row_count: number; sample: string[][]; suggested_mapping: Record<string, string> }
 interface Preview {
-  account: string; currency: string; total_rows: number; valid: number; to_import: number; duplicates: number; imported: number;
+  account: string; currency: string; total_rows: number; valid: number; to_import: number; suggested: number; duplicates: number; imported: number;
   errors: { line: number; message: string }[]; error_count: number; unknown_categories: string[];
   preview: { date: string; name: string; amount: number; category: string }[]; income: number; expense: number;
 }
@@ -34,6 +34,7 @@ export default function Import() {
   const [expenseSign, setExpenseSign] = useState<"negative" | "positive">("negative");
   const [skipDupes, setSkipDupes] = useState(true);
   const [createCats, setCreateCats] = useState(true);
+  const [suggestCats, setSuggestCats] = useState(true);
 
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export default function Import() {
     return m;
   }, [map, split]);
   const ready = !!(desc && accountId && mapping.date && mapping.name && (mapping.amount || mapping.debit || mapping.credit));
-  const body = (commit: boolean) => ({ csv, account_id: accountId, mapping, date_format: dateFormat, expense_sign: expenseSign, skip_duplicates: skipDupes, create_categories: createCats, commit });
+  const body = (commit: boolean) => ({ csv, account_id: accountId, mapping, date_format: dateFormat, expense_sign: expenseSign, skip_duplicates: skipDupes, create_categories: createCats, suggest_categories: suggestCats, commit });
 
   // Step 3: live dry-run whenever the settings change
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function Import() {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, csv, accountId, JSON.stringify(mapping), dateFormat, expenseSign, skipDupes, createCats]);
+  }, [ready, csv, accountId, JSON.stringify(mapping), dateFormat, expenseSign, skipDupes, createCats, suggestCats]);
 
   const run = useAction(() => api<Preview>("/api/import", { method: "POST", body: body(true) }), (r) => setResult(r));
   const reset = () => { setCsv(""); setFileName(""); setResult(null); };
@@ -169,6 +170,7 @@ export default function Import() {
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <label className="flex items-center gap-2"><input type="checkbox" checked={skipDupes} onChange={(e) => setSkipDupes(e.target.checked)} /> Skip rows already in this account</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={createCats} onChange={(e) => setCreateCats(e.target.checked)} /> Create categories that don't exist yet</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={suggestCats} onChange={(e) => setSuggestCats(e.target.checked)} /> Fill missing categories from similar past transactions</label>
           </div>
           <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full text-xs">
@@ -202,6 +204,7 @@ export default function Import() {
                     </ul>
                   </div>
                 )}
+                {suggestCats && preview.suggested > 0 && <p className="muted text-sm">{preview.suggested} row{preview.suggested === 1 ? "" : "s"} will be categorized from similar past transactions.</p>}
                 {preview.unknown_categories.length > 0 && (
                   <p className="muted text-sm">{createCats ? "New categories to create" : "Not matched, left uncategorized"}: {preview.unknown_categories.join(", ")}</p>
                 )}
