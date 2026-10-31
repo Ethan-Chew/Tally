@@ -1,5 +1,6 @@
 # Maybe Lite: one image serving the API and the built web app on :3001.
-FROM node:22-alpine AS build
+# The build stage only emits JavaScript and static files, so it runs on the builder's own CPU even when the image targets arm64.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json server/

@@ -1,0 +1,25 @@
+# Central Postgres for every app on the host: one database + one login role per app, nothing published on the host.
+# Put POSTGRES_PASSWORD=<random> in a .env next to this file (chmod 600), e.g. `openssl rand -hex 32`.
+# Apps join the `db` network and connect to postgres://<role>:<password>@core-postgres:5432/<database>.
+services:
+  core-postgres:
+    image: postgres:16
+    container_name: core-postgres
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: postgres
+    volumes:
+      - core-postgres-data:/var/lib/postgresql/data
+    networks: [db]
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  db:
+    name: db
+volumes:
+  core-postgres-data:
