@@ -68,7 +68,7 @@ export default function App() {
       {/* desktop sidebar */}
       <aside className="relative hidden shrink-0 border-r border-zinc-200/80 bg-white px-4 py-6 md:sticky md:top-0 md:block md:h-screen md:w-60">
         <Link to="/" className="mb-8 flex items-center gap-2.5 px-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-accent text-[13px] font-semibold text-white">t</div>
+          <img src="/favicon.svg" alt="" className="h-7 w-7" />
           <div className="text-[15px] font-semibold tracking-tight">Tally</div>
         </Link>
         <nav className="flex flex-col gap-1" aria-label="Main">
@@ -90,7 +90,7 @@ export default function App() {
 
       {/* phone: slim top bar + bottom tabs */}
       <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-zinc-200/80 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-        <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-accent text-[13px] font-semibold text-white">t</div>
+        <img src="/favicon.svg" alt="" className="h-7 w-7" />
         <div className="text-[15px] font-semibold tracking-tight">Tally</div>
         <div className="ml-auto flex items-center gap-1.5">
           <button onClick={toggleTheme} className="icon-btn" aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}><Icon name={dark ? "sun" : "moon"} /></button>
