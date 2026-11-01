@@ -146,3 +146,47 @@ export function Sparkline({ values, good = true, className }: { values: number[]
     </svg>
   );
 }
+
+/** Keep only what can be part of a money amount: digits, one decimal point, at most 2 decimals, optionally a leading minus. */
+export function cleanAmount(raw: string, allowNegative = false): string {
+  const neg = allowNegative && raw.trim().startsWith("-");
+  let t = raw.replace(/[^0-9.]/g, "");
+  const dot = t.indexOf(".");
+  if (dot >= 0) t = t.slice(0, dot + 1) + t.slice(dot + 1).replace(/\./g, "");
+  let [int = "", dec] = t.split(".");
+  int = int.replace(/^0+(?=\d)/, "").slice(0, 9);
+  const out = dec === undefined ? int : `${int || "0"}.${dec.slice(0, 2)}`;
+  return neg ? `-${out}` : out;
+}
+
+/** A number box that cannot hold anything but an amount: typing or pasting letters, symbols or a third decimal does nothing, and the phone shows the numeric keypad. */
+export function MoneyInput({ value, onChange, onBlur, currency, allowNegative, large, invalid, autoFocus, label, id }: {
+  value: string; onChange: (v: string) => void; onBlur?: () => void; currency?: string; allowNegative?: boolean; large?: boolean; invalid?: boolean; autoFocus?: boolean; label?: string; id?: string;
+}) {
+  const input = (
+    <input
+      id={id} type="text" inputMode="decimal" autoComplete="off" autoFocus={autoFocus} aria-label={label ?? "Amount"} aria-invalid={invalid || undefined} placeholder="0.00" value={value}
+      onChange={(e) => onChange(cleanAmount(e.target.value, allowNegative))}
+      onBlur={() => {
+        const n = Number(value);
+        if (value !== "" && Number.isFinite(n)) onChange(n.toFixed(2)); // 12.5 -> 12.50
+        else if (value === "-" || value === ".") onChange("");
+        onBlur?.();
+      }}
+      className={cx(
+        "w-full min-w-0 bg-transparent tabular-nums outline-none placeholder:text-zinc-300",
+        large ? "text-center text-[40px] font-semibold tracking-tight" : "text-[14px]",
+      )}
+    />
+  );
+  return (
+    <div className={cx(
+      "flex items-center gap-2 rounded-xl border bg-white transition focus-within:ring-4",
+      large ? "justify-center px-4 py-3" : "h-10 px-3",
+      invalid ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-500/10" : "border-zinc-200 focus-within:border-accent focus-within:ring-accent/10",
+    )}>
+      {currency && <span className={cx("muted shrink-0 font-medium", large ? "text-lg" : "text-xs")}>{currency}</span>}
+      {input}
+    </div>
+  );
+}

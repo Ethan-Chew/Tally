@@ -62,7 +62,7 @@ export default function Dashboard() {
 
       <div className="-mt-2 flex items-center gap-2.5">
         <button className="btn btn-primary" onClick={() => setModal("txn")}><Icon name="plus" className="h-4 w-4" />Add</button>
-        <button className="icon-btn" onClick={() => setModal("transfer")} aria-label="Transfer" title="Transfer"><Icon name="swap" /></button>
+        <button className="btn" onClick={() => setModal("transfer")}><Icon name="swap" className="h-4 w-4" />Transfer</button>
         <Link to="/settings/import" className="icon-btn" aria-label="Import CSV" title="Import CSV"><Icon name="import" /></Link>
         <Link to="/calendar" className="icon-btn" aria-label="Calendar" title="Calendar"><Icon name="calendar" /></Link>
       </div>
@@ -212,8 +212,6 @@ export default function Dashboard() {
           </ul>
         </section>
       </div>
-      {modal === "txn" && <TransactionModal onClose={() => setModal(null)} />}
-      {modal === "transfer" && <TransferModal onClose={() => setModal(null)} />}
       {modal === "txn" && <TransactionModal onClose={() => setModal(null)} />}
       {modal === "transfer" && <TransferModal onClose={() => setModal(null)} />}
     </div>

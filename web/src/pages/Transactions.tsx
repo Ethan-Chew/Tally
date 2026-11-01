@@ -50,7 +50,7 @@ export default function Transactions() {
         <h1 className="page-title">Transactions</h1>
         <div className="flex items-center gap-2">
           <Link to="/settings/import" className="icon-btn" aria-label="Import CSV" title="Import CSV"><Icon name="upload" /></Link>
-          <button className="icon-btn" onClick={() => setTransfer(true)} aria-label="Transfer" title="Transfer"><Icon name="swap" /></button>
+          <button className="btn" onClick={() => setTransfer(true)}><Icon name="swap" className="h-4 w-4" />Transfer</button>
           <button className="btn btn-primary" onClick={() => setEditing("new")}><Icon name="plus" className="h-4 w-4" />New</button>
         </div>
       </div>

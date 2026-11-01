@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, type Account } from "../api";
 import { Icon } from "../components/Icon";
-import { BigMoney, ErrorNote, Field, Modal, PageSkeleton, Sparkline } from "../components/ui";
+import { TransferModal } from "../components/EntryForms";
+import { BigMoney, ErrorNote, Field, Modal, MoneyInput, PageSkeleton, Sparkline } from "../components/ui";
 import { useAccounts, useAction, useMe } from "../hooks";
 import { ASSET_TYPES, cx, LIABILITY_TYPES, money, TYPE_ICONS, TYPE_LABELS } from "../lib";
 
@@ -63,6 +64,7 @@ function Group({ type, list, currency }: { type: string; list: Account[]; curren
 export default function Accounts() {
   const { data, isLoading } = useAccounts();
   const [adding, setAdding] = useState(false);
+  const [transfer, setTransfer] = useState(false);
   if (isLoading || !data) return <PageSkeleton />;
   const cur = data.currency;
   const groups = (types: string[]) => types.map((t) => ({ t, list: data.accounts.filter((a) => a.accountable_type === t) })).filter((g) => g.list.length);
@@ -72,7 +74,10 @@ export default function Accounts() {
     <div className="space-y-8 sm:space-y-10">
       <div className="flex items-center justify-between">
         <div><h1 className="page-title">Accounts</h1></div>
-        <button className="btn btn-primary" onClick={() => setAdding(true)}><Icon name="plus" className="h-4 w-4" />Add</button>
+        <div className="flex items-center gap-2">
+          <button className="btn" onClick={() => setTransfer(true)}><Icon name="swap" className="h-4 w-4" />Transfer</button>
+          <button className="btn btn-primary" onClick={() => setAdding(true)}><Icon name="plus" className="h-4 w-4" />Add</button>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="card px-5 py-4 sm:px-7"><div className="eyebrow">Assets</div><div className="stat mt-1"><BigMoney value={data.assets} currency={cur} /></div></div>
@@ -83,6 +88,7 @@ export default function Accounts() {
       {liabilities.map((g) => <Group key={g.t} type={g.t} list={g.list} currency={cur} />)}
       {!assets.length && !liabilities.length && <p className="muted p-5 text-sm">Nothing here yet.</p>}
       {adding && <NewAccountModal onClose={() => setAdding(false)} />}
+      {transfer && <TransferModal onClose={() => setTransfer(false)} />}
     </div>
   );
 }
@@ -120,7 +126,7 @@ function NewAccountModal({ onClose }: { onClose: () => void }) {
           </Field>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label={liability ? "Amount owed" : "Current balance"}><input className="input" type="number" step="0.01" required value={balance} onChange={(e) => setBalance(e.target.value)} /></Field>
+          <div><span className="label">{liability ? "Amount owed" : "Current balance"}</span><MoneyInput currency={currency} allowNegative value={balance} onChange={setBalance} /></div>
           <Field label="Currency"><input className="input uppercase" maxLength={3} minLength={3} required value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} /></Field>
         </div>
         <Field label="Balance as of" hint="Defaults to yesterday so transactions you add today are applied on top.">

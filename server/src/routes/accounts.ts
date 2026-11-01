@@ -176,7 +176,7 @@ export async function accountRoutes(app: FastifyInstance) {
       if (existing) {
         await query(`UPDATE account_entries SET amount = $2, updated_at = ${NOW} WHERE id = $1`, [existing.id, b.amount], c);
       } else {
-        await insertValuation(c, id, a.currency, b.date, b.amount, "Balance update");
+        await insertValuation(c, id, a.currency, b.date, b.amount, "Rebalance");
       }
       await recomputeAccount(c, id);
     });

@@ -5,8 +5,8 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { api, type Entry } from "../api";
 import { EntryList } from "../components/EntryList";
 import { Icon } from "../components/Icon";
-import { TransactionModal } from "../components/EntryForms";
-import { BigMoney, Empty, ErrorNote, Field, LoadMore, Modal, PageSkeleton, Pills } from "../components/ui";
+import { TransactionModal, TransferModal } from "../components/EntryForms";
+import { BigMoney, Empty, ErrorNote, Field, LoadMore, Modal, MoneyInput, PageSkeleton, Pills } from "../components/ui";
 import { useAction, useEntries } from "../hooks";
 import { cx, fmtDate, money, todayStr, TYPE_LABELS } from "../lib";
 
@@ -26,6 +26,7 @@ export default function AccountDetail() {
   const [editing, setEditing] = useState<Entry | "new" | null>(null);
   const [valuing, setValuing] = useState<Entry | boolean>(false);
   const [settings, setSettings] = useState(false);
+  const [transfer, setTransfer] = useState(false);
 
   const detail = useQuery({ queryKey: ["account", id], queryFn: () => api<Detail>(`/api/accounts/${id}`) });
   const entries = useEntries({ account_id: id, kind: "all" }, 25);
@@ -51,7 +52,8 @@ export default function AccountDetail() {
             <p className="muted text-sm">{TYPE_LABELS[a.accountable_type]}{a.subtype ? ` · ${a.subtype.replace(/_/g, " ")}` : ""} · {a.currency}</p>
           </div>
           <div className="flex gap-2">
-            <button className="icon-btn" onClick={() => setValuing(true)} aria-label="Update balance" title="Update balance"><Icon name="edit" /></button>
+            <button className="btn" onClick={() => setValuing(true)} title="Set the balance to match your statement"><Icon name="edit" className="h-4 w-4" />Rebalance</button>
+            <button className="btn" onClick={() => setTransfer(true)}><Icon name="swap" className="h-4 w-4" />Transfer</button>
             <button className="btn btn-primary" onClick={() => setEditing("new")}><Icon name="plus" className="h-4 w-4" />Add</button>
             <button className="icon-btn" onClick={() => setSettings(true)} aria-label="Account settings" title="Account settings"><Icon name="settings" /></button>
           </div>
@@ -116,6 +118,7 @@ export default function AccountDetail() {
 
       {editing && <TransactionModal entry={editing === "new" ? undefined : editing} defaultAccountId={id} onClose={() => setEditing(null)} />}
       {valuing && <ValuationModal accountId={id} currency={a.currency} current={a.balance} entry={typeof valuing === "object" ? valuing : undefined} onClose={() => setValuing(false)} />}
+      {transfer && <TransferModal fromId={id} onClose={() => setTransfer(false)} />}
       {settings && <SettingsModal account={a} onClose={() => setSettings(false)} onDeleted={() => nav("/accounts")} />}
     </div>
   );
@@ -126,19 +129,23 @@ function ValuationModal({ accountId, currency, current, entry, onClose }: { acco
   const [date, setDate] = useState(entry?.date ?? todayStr());
   const save = useAction(() => api(`/api/accounts/${accountId}/valuations`, { method: "POST", body: { date, amount: Number(amount) } }), onClose);
   const remove = useAction(() => api(`/api/entries/${entry!.id}`, { method: "DELETE" }), onClose);
-  const submit = (e: FormEvent) => { e.preventDefault(); save.mutate(); };
+  const valid = amount !== "" && Number.isFinite(Number(amount)) && /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const submit = (e: FormEvent) => { e.preventDefault(); if (valid && !save.isPending) save.mutate(); };
   return (
-    <Modal title={entry ? "Edit balance update" : "Update balance"} onClose={onClose}>
+    <Modal title={entry ? "Edit rebalance" : "Rebalance"} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
-        <p className="muted text-sm">Sets the account balance on a date (e.g. after checking your statement). Later transactions build on top of it.</p>
+        <p className="muted text-sm">Forces the balance to this amount as of a date, e.g. to match your statement or an investment app. Transactions after that date build on top of it.</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={`Balance (${currency})`}><input className="input" type="number" step="0.01" required autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+          <div><span className="label">New balance</span><MoneyInput currency={currency} allowNegative autoFocus value={amount} onChange={setAmount} /></div>
           <Field label="As of"><input className="input" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         </div>
+        {!entry && date === todayStr() && Number(amount) !== current && amount !== "" && (
+          <p className="muted text-sm">Changes the balance by <span className="font-medium tabular-nums text-zinc-900">{money(Number(amount) - current, currency)}</span> (now {money(current, currency)}).</p>
+        )}
         <ErrorNote error={save.error ?? remove.error} />
         <div className="flex items-center justify-between">
           {entry ? <button type="button" className="btn btn-danger" onClick={() => confirm("Delete this balance update?") && remove.mutate()}>Delete</button> : <span />}
-          <div className="flex gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={save.isPending}>Save</button></div>
+          <div className="flex gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={save.isPending || !valid}>Save</button></div>
         </div>
       </form>
     </Modal>
