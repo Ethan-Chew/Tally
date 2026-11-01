@@ -19,15 +19,20 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const end = today();
     const from = days === null ? "1900-01-01" : addDays(end, -days);
 
+    // One point per day, adding up EVERY account. Balance rows are only written up to the day an account was last recalculated,
+    // so an account with no row on a day still holds its latest earlier balance (otherwise it drops out of that day's total).
     const series = await query<{ date: string; assets: number; liabilities: number }>(
-      `SELECT b.date::text,
-              COALESCE(sum(CASE WHEN a.classification = 'asset' THEN b.balance * ${fxRate("fx")} END), 0) AS assets,
-              COALESCE(sum(CASE WHEN a.classification = 'liability' THEN b.balance * ${fxRate("fx")} END), 0) AS liabilities
-       FROM account_balances b
-       JOIN accounts a ON a.id = b.account_id AND a.family_id = $1 AND a.is_active
-       ${fxJoin("fx", "b.currency", "b.date", "$2")}
-       WHERE b.date >= $3 AND b.date <= $4
-       GROUP BY b.date ORDER BY b.date`,
+      `WITH accts AS (SELECT a.id, a.classification FROM accounts a WHERE a.family_id = $1 AND a.is_active),
+            span AS (SELECT GREATEST($3::date, min(b.date)) AS d0 FROM account_balances b JOIN accts ON accts.id = b.account_id),
+            days AS (SELECT d::date AS date FROM span, generate_series(span.d0, $4::date, interval '1 day') d)
+       SELECT days.date::text AS date,
+              COALESCE(sum(CASE WHEN a.classification = 'asset' THEN bal.balance * ${fxRate("fx")} END), 0) AS assets,
+              COALESCE(sum(CASE WHEN a.classification = 'liability' THEN bal.balance * ${fxRate("fx")} END), 0) AS liabilities
+       FROM days
+       CROSS JOIN accts a
+       JOIN LATERAL (SELECT b.balance, b.currency FROM account_balances b WHERE b.account_id = a.id AND b.date <= days.date ORDER BY b.date DESC LIMIT 1) bal ON true
+       ${fxJoin("fx", "bal.currency", "days.date", "$2")}
+       GROUP BY days.date ORDER BY days.date`,
       [fam, cur, from, end],
     );
     const all = series.map((s) => ({ date: s.date, assets: s.assets, liabilities: s.liabilities, net_worth: s.assets - s.liabilities }));
