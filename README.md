@@ -1,3 +1,5 @@
+<p align="center"><img src="web/public/favicon.svg" alt="" width="72" height="72"></p>
+
 # Tally
 
 Tally is a slimmed-down, single-user rewrite of [Maybe Finance](https://github.com/maybe-finance/maybe) as a plain web app with a minimal light UI:
@@ -5,6 +7,26 @@ Tally is a slimmed-down, single-user rewrite of [Maybe Finance](https://github.c
 - **Backend:** Fastify 5 + TypeScript, raw SQL via `pg`, Zod validation
 - **Frontend:** React 19 + Vite + TypeScript, TanStack Query, Tailwind v4, Recharts
 - **Database:** your existing Maybe Postgres database, used **as is**. There are no migrations and no data conversion: it reads and writes the original Rails tables (`accounts`, `account_entries`, `account_balances`, `budgets`, ...), so a `pg_dump` from the old app drops straight in.
+
+![Home](docs/screenshots/dashboard.png)
+
+<details>
+<summary>More screenshots</summary>
+
+| | |
+|---|---|
+| **Budget** (Fixed / Flexible / Non-monthly) | **Cash flow** |
+| ![Budget](docs/screenshots/budget.png) | ![Cash flow](docs/screenshots/cashflow.png) |
+| **Spending report** | **Accounts** |
+| ![Spending](docs/screenshots/spending.png) | ![Accounts](docs/screenshots/accounts.png) |
+| **Recurring** | **Calendar** |
+| ![Recurring](docs/screenshots/recurring.png) | ![Calendar](docs/screenshots/calendar.png) |
+| **Dark mode** | **Phone** |
+| ![Budget, dark](docs/screenshots/budget-dark.png) | <img src="docs/screenshots/mobile-budget.png" width="300" alt="Budget on a phone"> |
+
+</details>
+
+The screenshots use made-up data (`scripts/demo-seed.mjs`), not real accounts.
 
 ## Run it
 
@@ -83,13 +105,18 @@ server/src/   index.ts, owner.ts, db.ts, csv.ts, balances.ts (balance recompute)
               recurring.ts (bill detection), suggest.ts (category suggestions), routes/*
 web/src/      App.tsx, pages/*, components/*, ranges.ts (date ranges)
 scripts/      itest.mjs, import.itest.mjs (API integration tests; run against a COPY of your DB),
-              csv.test.ts, recurring.test.ts (unit tests), db/* (backup and restore)
+              csv.test.ts, recurring.test.ts (unit tests), db/* (backup and restore),
+              demo-seed.mjs, screenshots.mjs (made-up data and the README screenshots)
 deploy/       compose.pi.yml, core-postgres.yml, update.sh (see docs/SELF-HOSTING.md)
 docs/         DATABASE.md, SELF-HOSTING.md
 .github/      workflows/image.yml (builds the Docker image)
 ```
 
 Checks: `npm run typecheck` (both packages), `npx tsx scripts/csv.test.ts`, `npx tsx scripts/recurring.test.ts`.
+
+## Contributing, security, license
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the demo data and the checks to run, and [SECURITY.md](SECURITY.md) before hosting it anywhere (there is no login). Tally is released under the [MIT License](LICENSE). It is an independent project and not affiliated with Maybe Finance.
 
 ## Deploying
 
