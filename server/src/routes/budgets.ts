@@ -94,11 +94,12 @@ async function loadBudget(familyId: string, currency: string, month: string) {
   const spentBy = new Map(totals.map((t) => [t.category_id, t.spent]));
   // Fixed / Flexible / Non-monthly are worked out, not stored: a category is "fixed" when recurring monthly bills make up most of
   // what it holds, "non-monthly" when that is mostly quarterly or yearly bills, and "flexible" otherwise.
+  // Slow bills are compared by the size of one charge: a 210 quarterly premium is 70 a month, but in its own month it is the whole category.
   const recurring = (await loadRecurring(familyId, budget.currency)).filter((r) => r.active && r.direction === "expense" && r.category_id);
   const billed = new Map<string, { fixed: number; non_monthly: number }>();
   for (const r of recurring) {
     const b = billed.get(r.category_id!) ?? { fixed: 0, non_monthly: 0 };
-    if (r.cadence === "quarterly" || r.cadence === "yearly") b.non_monthly += r.monthly; else b.fixed += r.monthly;
+    if (r.cadence === "quarterly" || r.cadence === "yearly") b.non_monthly += r.amount; else b.fixed += r.monthly;
     billed.set(r.category_id!, b);
   }
   const bucketOf = (id: string, budgeted: number, actual: number) => {
