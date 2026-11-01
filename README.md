@@ -26,20 +26,21 @@ restores are covered in **[docs/DATABASE.md](docs/DATABASE.md)**. Quick referenc
 | `npm run db:restore -- <file>` | restore (takes a safety backup first) |
 | `npm run db:backup:schedule -- install 02:30` | daily automatic backups |
 
+Running it on a server (a Raspberry Pi behind a reverse proxy, with automatic updates from GitHub) is covered in **[docs/SELF-HOSTING.md](docs/SELF-HOSTING.md)**.
+
 There is **no login**: the app acts as the first user/family in your database, so your existing data just appears. Because anyone who can reach the server can read and change everything, it listens on `127.0.0.1` only by default. Don't expose it to a network (`HOST=0.0.0.0`) unless you put your own access control in front of it.
 
 ## What's in
 
 | Area | What you can do |
 |---|---|
-| **Accounts** | All 9 account types (cash, investment, crypto, property, vehicle, other asset, credit card, loan, other liability). Multi-currency with conversion to your home currency using the `exchange_rates` already in your data. Disable / rename / delete. "Update balance" for manually-tracked accounts. |
+| **Accounts** | All 9 account types (cash, investment, crypto, property, vehicle, other asset, credit card, loan, other liability), grouped into collapsible cards per type with a 30-day change and a sparkline per account. Multi-currency with conversion to your home currency using the `exchange_rates` already in your data. Disable / rename / delete. "Update balance" for manually-tracked accounts. |
 | **Transactions** | Search, filter (account, category, tag, type, dates), pagination, create / edit / delete, merchants, tags, notes, "exclude from reports", bulk recategorize / delete. |
 | **Transfers** | Create transfers between accounts; confirm or reject the auto-detected "pending" transfers already in your data. Transfers are excluded from spending/income. |
-| **Budgets** | Monthly total and per-category budgets (click any amount to edit). Shows spent vs. budget stacked by category, left to spend, a daily allowance, projected month-end spend, a spending-pace chart against an even-spend line, income vs. expected, unused categories folded away, and a 12-month history. A new month starts as a copy of the previous one. |
-| **Calendar** | A month grid showing how much you spent each day, with category dots for *what* it went on and a heat tint for bigger days. Click a day for its category breakdown and every transaction. Monthly total, daily average, biggest day, no-spend days. |
-| **Recurring** | Finds repeating bills, subscriptions and income (weekly to yearly) from your transaction history: monthly totals, what is due in the next 30 days, per-item history, and a "not recurring" button (remembered in the browser). Due dates also appear on the calendar. Nothing is stored; it is recomputed from your transactions. |
-| **Cash flow** | Income vs. spending over a period as a Sankey diagram (income sources, the spending groups or categories they fed, and what was saved), with savings rate and a comparison with the previous period. List view on phones. |
-| **Reports** | Spending or income by category, merchant or tag, month by month, with a ranked list that links through to the matching transactions. |
+| **Budgets** | A Budget / Actual / Remaining table for the month (click any amount to edit). Expenses are split into **Fixed**, **Flexible** and **Non-monthly** automatically, based on the recurring bills found in your history. Each category has a remaining pill and a progress line (red when over). Also: a segmented ring of spent vs. budget, a "Left to budget" card with Summary / Income / Expenses tabs, a spending-pace chart against an even-spend line, a daily allowance, projected month-end spend, income vs. expected, unused categories folded away, and a 12-month history. A new month starts as a copy of the previous one. |
+| **Calendar** | A month grid showing how much you spent each day, with category dots for *what* it went on and a heat tint for bigger days. Click a day for its category breakdown and every transaction. Monthly total, daily average, biggest day, no-spend days. Upcoming recurring bills are marked on their due dates. |
+| **Recurring** | Finds repeating bills, subscriptions and income (weekly to yearly) from your transaction history: monthly totals, what is due in the next 30 days, per-item history, and a "not recurring" button (remembered in the browser). Nothing is stored; it is recomputed from your transactions. |
+| **Reports** | Three tabs. **Cash Flow:** income vs. spending as a Sankey diagram (income sources, the spending groups or categories they fed, and what was saved), with savings rate and a comparison with the previous period; a list view on phones. **Spending** and **Income:** by category, merchant or tag, as a donut with a legend or as a month-by-month stacked chart, a transaction list that follows the slice you click, a summary card and *Download CSV*. |
 | **Suggestions** | The transaction form offers the category used for the same description before, CSV import can fill uncategorized rows the same way, and Transactions has a *Needs review* shortcut. |
 | **Import** | Upload (or paste) a bank CSV, match columns, preview, import. See below. |
 | **Privacy** | The eye button (sidebar on desktop, top bar on phones) hides every amount in the app, including charts, the calendar and editable budget fields. The choice is remembered in the browser. |
@@ -78,9 +79,18 @@ Investment **holdings and trades already in your data are shown read-only**; bal
 ## Layout
 
 ```
-server/src/   index.ts, owner.ts, db.ts, csv.ts, balances.ts (balance recompute), fx.ts (SQL conversion), routes/*
-web/src/      App.tsx, pages/*, components/*
-scripts/      itest.mjs, import.itest.mjs (API integration tests; run against a COPY of your DB), csv.test.ts (parser unit tests: `npx tsx scripts/csv.test.ts`)
+server/src/   index.ts, owner.ts, db.ts, csv.ts, balances.ts (balance recompute), fx.ts (SQL conversion),
+              recurring.ts (bill detection), suggest.ts (category suggestions), routes/*
+web/src/      App.tsx, pages/*, components/*, ranges.ts (date ranges)
+scripts/      itest.mjs, import.itest.mjs (API integration tests; run against a COPY of your DB),
+              csv.test.ts, recurring.test.ts (unit tests), db/* (backup and restore)
+deploy/       compose.pi.yml, core-postgres.yml, update.sh (see docs/SELF-HOSTING.md)
+docs/         DATABASE.md, SELF-HOSTING.md
+.github/      workflows/image.yml (builds the Docker image)
 ```
 
-`npm run typecheck` checks both packages.
+Checks: `npm run typecheck` (both packages), `npx tsx scripts/csv.test.ts`, `npx tsx scripts/recurring.test.ts`.
+
+## Deploying
+
+Push to `main` and GitHub builds a Docker image (arm64, for the Pi) and publishes it to `ghcr.io/<owner>/tally`. A cron script on the server pulls it, backs up the database, restarts the app and rolls back if it doesn't come up healthy. Setup and day-to-day commands are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
