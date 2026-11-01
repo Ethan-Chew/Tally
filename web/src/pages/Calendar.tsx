@@ -5,7 +5,7 @@ import { api, qs, type EntriesResponse } from "../api";
 import { Amount } from "../components/EntryList";
 import { Icon } from "../components/Icon";
 import { CatBadge, Empty, PageSkeleton, Spinner } from "../components/ui";
-import { currentMonth, cx, fmtDate, money, monthLabel, todayStr } from "../lib";
+import { currentMonth, monthFromUrl, cx, fmtDate, money, monthLabel, todayStr } from "../lib";
 import { isHidden, MASK } from "../privacy";
 
 interface Day { date: string; spent: number; income: number; count: number; categories: { name: string; color: string; icon: string | null; amount: number }[] }
@@ -19,7 +19,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const short = (n: number) => (isHidden() ? MASK : n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(n % 1 ? 1 : 0));
 
 export default function CalendarPage() {
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useState(monthFromUrl);
   const [selected, setSelected] = useState<string>("");
   const cal = useQuery({ queryKey: ["calendar", month], queryFn: () => api<Cal>(`/api/calendar/${month}`), placeholderData: (p) => p });
   const data = cal.data;

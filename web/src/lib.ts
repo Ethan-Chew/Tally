@@ -22,6 +22,11 @@ export function monthLabel(m: string) {
 }
 
 export const currentMonth = () => todayStr().slice(0, 7);
+/** The month in the page's `?month=YYYY-MM` link, or the current month. */
+export const monthFromUrl = () => {
+  const m = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("month");
+  return m && /^\d{4}-(0[1-9]|1[0-2])$/.test(m) ? m : currentMonth();
+};
 
 export const TYPE_LABELS: Record<string, string> = {
   Depository: "Cash & bank", Investment: "Investments", Crypto: "Crypto", Property: "Property", Vehicle: "Vehicles",

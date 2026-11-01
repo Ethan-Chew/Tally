@@ -6,7 +6,7 @@ import { Icon } from "../components/Icon";
 import { CatBadge, ErrorNote, PageSkeleton } from "../components/ui";
 import type { BudgetCategory } from "../api";
 import { useAction } from "../hooks";
-import { axisNum, currentMonth, cx, fmtDate, money, monthLabel, todayStr } from "../lib";
+import { axisNum, currentMonth, monthFromUrl, cx, fmtDate, money, monthLabel, todayStr } from "../lib";
 import { isHidden, MASK } from "../privacy";
 
 interface History { month: string; budgeted: number | null; spent: number; income: number }
@@ -141,7 +141,7 @@ function GroupBar({ label, budget, spent, cur }: { label: string; budget: number
 }
 
 export default function Budgets() {
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useState(monthFromUrl);
   const [showUnused, setShowUnused] = useState(false);
   const [tab, setTab] = useState<"summary" | "income" | "expenses">("expenses");
   const [closed, setClosed] = useState<Set<string>>(new Set()); // collapsed groups
