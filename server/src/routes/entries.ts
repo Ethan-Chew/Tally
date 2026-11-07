@@ -32,6 +32,7 @@ const listQuery = z.object({
   from: isoDate.optional(),
   to: isoDate.optional(),
   type: z.enum(["income", "expense", "transfer"]).optional(),
+  counted: z.literal("1").optional(), // only what budgets and reports count: the exact category (not its children), nothing excluded
   kind: z.enum(["transaction", "valuation", "trade", "all"]).default("transaction"),
   page: z.coerce.number().int().min(1).default(1),
   per_page: z.coerce.number().int().min(1).max(200).default(50),
@@ -92,7 +93,8 @@ export async function entryRoutes(app: FastifyInstance) {
     if (f.kind !== "all") where.push(`e.entryable_type = ${p(TYPE_BY_KIND[f.kind])}`);
     if (f.account_id) where.push(`e.account_id = ${p(f.account_id)}`);
     if (f.category_id === "none") where.push("t.id IS NOT NULL AND t.category_id IS NULL");
-    else if (f.category_id) where.push(`(t.category_id = ${p(f.category_id)} OR c.parent_id = ${p(f.category_id)})`); // a parent category includes its children
+    else if (f.category_id) where.push(f.counted ? `t.category_id = ${p(f.category_id)}` : `(t.category_id = ${p(f.category_id)} OR c.parent_id = ${p(f.category_id)})`); // a parent category includes its children
+    if (f.counted) where.push("NOT e.excluded");
     if (f.merchant_id) where.push(`t.merchant_id = ${p(f.merchant_id)}`);
     if (f.tag_id) where.push(`EXISTS (SELECT 1 FROM taggings g WHERE g.taggable_id = t.id AND g.taggable_type = 'Account::Transaction' AND g.tag_id = ${p(f.tag_id)})`);
     if (f.q) {
